@@ -1,0 +1,39 @@
+name: SystemVerilog GTest CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Verilator and GTest
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y verilator libgtest-dev
+
+    - name: Lint SystemVerilog Code
+      run: verilator --lint-only -Wall src/blink.sv
+
+    - name: Compile Simulation Model with GTest
+      # Добавляем флаги линковки для GTest (-lgtest -lgtest_main -pthread)
+      run: |
+        verilator -Wall --trace --cc src/blink.sv --exe tb/testbench.cpp -LDFLAGS "-lgtest -lgtest_main -pthread"
+        make -j -C obj_dir -f Vblink.mk Vblink
+
+    - name: Run GTest Simulation
+      run: ./obj_dir/Vblink
+
+    - name: Upload Waveforms
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: simulation-waves
+        path: "*.vcd"
