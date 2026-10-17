@@ -1,4 +1,4 @@
-name: SystemVerilog GTest CI
+name: SystemVerilog CMake CI
 
 on:
   push:
@@ -22,16 +22,17 @@ jobs:
     - name: Lint SystemVerilog Code
       run: verilator --lint-only -Wall src/blink.sv
 
-    - name: Compile Simulation Model with GTest
-      # Добавляем флаги линковки для GTest (-lgtest -lgtest_main -pthread)
-      run: |
-        verilator -Wall --trace --cc src/blink.sv --exe tb/testbench.cpp -LDFLAGS "-lgtest -lgtest_main -pthread"
-        make -j -C obj_dir -f Vblink.mk Vblink
+    - name: Configure CMake
+      run: cmake -B build
+
+    - name: Build Simulation Model
+      run: cmake --build build -j4
 
     - name: Run GTest Simulation
-      run: ./obj_dir/Vblink
+      run: ./build/testbench
 
     - name: Upload Waveforms
+      # always() гарантирует загрузку артефакта, даже если тесты или сборка упали
       if: always()
       uses: actions/upload-artifact@v4
       with:

@@ -16,7 +16,7 @@ protected:
         trace = std::make_unique<VerilatedVcdC>();
         Verilated::traceEverOn(true);
         
-        // Название дампа зависит от текущего теста
+        // Название VCD-дампа зависит от имени текущего теста
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
         std::string vcd_name = std::string("dump_") + test_info->name() + ".vcd";
         
@@ -33,6 +33,7 @@ protected:
         trace->close();
     }
 
+    // Вспомогательный метод для симуляции одного такта (clock cycle)
     void tick() {
         dut->clk = 0;
         dut->eval();
@@ -48,13 +49,13 @@ TEST_F(BlinkTest, ResetBehavior) {
     dut->rst = 1;
     tick();
     tick();
-    EXPECT_EQ(dut->led, 0) << "LED must be 0 when reset is active";
+    EXPECT_EQ(dut->led, 0) << "Ошибка: LED должен быть равен 0 при активном rst";
 }
 
 TEST_F(BlinkTest, BlinkingBehavior) {
     dut->rst = 1;
     tick();
-    dut->rst = 0; // Отпускаем сброс
+    dut->rst = 0; // Снятие сигнала сброса
 
     int last_led = dut->led;
     int toggle_count = 0;
@@ -67,7 +68,7 @@ TEST_F(BlinkTest, BlinkingBehavior) {
         }
     }
 
-    EXPECT_GT(toggle_count, 5) << "LED should toggle multiple times";
+    EXPECT_GT(toggle_count, 5) << "Ошибка: LED не переключается ожидаемое количество раз";
 }
 
 int main(int argc, char **argv) {
